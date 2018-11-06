@@ -66,6 +66,8 @@ class Book(models.Model):
 # Modelo de instancias de libros
 
 import uuid # Requerida para las instancias de libros únicos
+from django.contrib.auth.models import User # Para vincular las instancias con prestamos a usuarios
+from datetime import date
 
 class BookInstance(models.Model):
     """
@@ -85,6 +87,8 @@ class BookInstance(models.Model):
 
     status = models.CharField(max_length=1, choices=LOAN_STATUS, blank=True, default='m', help_text='Disponibilidad del libro')
 
+    borrower = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+
     class Meta:
         ordering = ["due_back"]
         
@@ -95,6 +99,12 @@ class BookInstance(models.Model):
         """
         # return '%s (%s)' % (self.id,self.book.title) ->> esto funcionaba con python 2
         return '{0} ({1})'.format(self.book,self.id)
+    
+    @property
+    def is_overdue(self):
+        if self.due_back and date.today() > self.due_back:
+            return True
+        return False
 
 
 # Modelo para los autores
