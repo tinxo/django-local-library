@@ -3,7 +3,9 @@ from django.shortcuts import render
 # Create your views here.
 
 from .models import Book, Author, BookInstance, Genre
+from django.contrib.auth.decorators import login_required
 
+@login_required
 def index(request):
     """
     Función vista para la página inicio del sitio.
@@ -40,8 +42,10 @@ def index(request):
 # Se crea una vista-de-clase, para eso en vez de una función se genera una clase por el modelo
 
 from django.views import generic
+from django.contrib.auth.mixins import LoginRequiredMixin 
+# Esto se agrega para que las vistas-de-clase tengan el control de login
 
-class BookListView(generic.ListView):
+class BookListView(LoginRequiredMixin, generic.ListView):
     model = Book
     template_name = 'book_list.html'  # Specify your own template name/location
     paginate_by = 2
@@ -57,10 +61,10 @@ class BookListView(generic.ListView):
         context['some_data'] = 'This is just some data'
         return context
 
-class BookDetailView(generic.DetailView):
+class BookDetailView(LoginRequiredMixin, generic.DetailView):
     model = Book
 
-class AuthorListView(generic.ListView):
+class AuthorListView(LoginRequiredMixin, generic.ListView):
     model = Author
     template_name = 'author_list.html'
     paginate_by = 2
@@ -72,5 +76,5 @@ class AuthorListView(generic.ListView):
         context = super(AuthorListView, self).get_context_data(**kwargs)
         return context
 
-class AuthorDetailView(generic.DetailView):
+class AuthorDetailView(LoginRequiredMixin, generic.DetailView):
     model = Author
