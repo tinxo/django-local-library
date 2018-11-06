@@ -43,7 +43,8 @@ def index(request):
 
 from django.views import generic
 from django.contrib.auth.mixins import LoginRequiredMixin 
-# Esto se agrega para que las vistas-de-clase tengan el control de login
+from django.contrib.auth.mixins import PermissionRequiredMixin
+# Esto se agrega para que las vistas-de-clase tengan el control de login y de permisos
 
 class BookListView(LoginRequiredMixin, generic.ListView):
     model = Book
@@ -78,3 +79,28 @@ class AuthorListView(LoginRequiredMixin, generic.ListView):
 
 class AuthorDetailView(LoginRequiredMixin, generic.DetailView):
     model = Author
+
+class LoanedBooksByUserListView(LoginRequiredMixin,generic.ListView):
+    """
+    Generic class-based view listing books on loan to current user. 
+    """
+    model = BookInstance
+    template_name ='catalog/bookinstance_list_borrowed_user.html'
+    paginate_by = 10
+    
+    def get_queryset(self):
+        return BookInstance.objects.filter(borrower=self.request.user).filter(status__exact='o').order_by('due_back')
+
+
+
+class LoanedBooksAllListView(PermissionRequiredMixin,generic.ListView):
+    """
+    Generic class-based view listing all books on loan.
+    """
+    permission_required = 'catalog.can_view_all_borrowed'
+    model = BookInstance
+    template_name ='catalog/bookinstance_list_borrowed.html'
+    paginate_by = 10
+    
+    def get_queryset(self):
+        return BookInstance.objects.filter(status__exact='o').order_by('due_back')
