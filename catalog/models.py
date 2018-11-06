@@ -91,6 +91,10 @@ class BookInstance(models.Model):
 
     class Meta:
         ordering = ["due_back"]
+        permissions = (
+            ("can_mark_returned", "Set book as returned"),
+            ("can_view_all_borrowed", "View books borrowed by all users"),
+        ) 
         
 
     def __str__(self):
