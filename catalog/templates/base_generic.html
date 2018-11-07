@@ -45,6 +45,17 @@
                         <li><a href="{% url 'all-borrowed' %}">All borrowed</a></li>
                         </ul>
                     {% endif %}
+
+                    {% if user.is_authenticated and perms.catalog.can_add_mod_del_authors and perms.catalog.can_add_mod_del_books %}
+                        <hr />
+                        <ul class="sidebar-nav">
+                        <li>Autores</li>
+                        <li><a href="{% url 'author_create' %}">Nuevo autor</a></li>
+                        <br>
+                        <li>Libros</li>
+                        <li><a href="{% url 'book_create' %}">Nuevo libro</a></li>
+                        </ul>
+                    {% endif %}
                     
                 </ul>
                 {% endblock %}

@@ -145,3 +145,40 @@ def renew_book_librarian(request, pk):
         form = RenewBookModelForm(initial={'due_back': proposed_renewal_date}, instance=book_inst)
 
     return render(request, 'catalog/book_renew_librarian.html', {'form': form, 'bookinst':book_inst})
+
+from django.views.generic.edit import CreateView, UpdateView, DeleteView
+from django.urls import reverse_lazy
+from .models import Author
+
+class AuthorCreate(PermissionRequiredMixin, CreateView):
+    permission_required = 'catalog.can_add_mod_del_authors'
+    model = Author
+    fields = '__all__'
+    #initial={'date_of_death':'05/01/2018',}
+
+class AuthorUpdate(PermissionRequiredMixin, UpdateView):
+    permission_required = 'catalog.can_add_mod_del_authors'
+    model = Author
+    fields = ['first_name','last_name','date_of_birth','date_of_death']
+
+class AuthorDelete(PermissionRequiredMixin, DeleteView):
+    permission_required = 'catalog.can_add_mod_del_authors'
+    model = Author
+    success_url = reverse_lazy('authors')
+
+from .models import Book
+
+class BookCreate(PermissionRequiredMixin, CreateView):
+    permission_required = 'catalog.can_add_mod_del_books'
+    model = Book
+    fields = '__all__'
+
+class BookUpdate(PermissionRequiredMixin, UpdateView):
+    permission_required = 'catalog.can_add_mod_del_books'
+    model = Book
+    fields = '__all__'
+
+class BookDelete(PermissionRequiredMixin, DeleteView):
+    permission_required = 'catalog.can_add_mod_del_books'
+    model = Book
+    success_url = reverse_lazy('books')
