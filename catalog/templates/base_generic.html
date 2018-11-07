@@ -38,16 +38,11 @@
                     
                     {% endif %}
 
-                    {% if user.is_authenticated %}
+                    {% if user.is_authenticated and perms.catalog.can_mark_returned %}
                         <hr />
                         <ul class="sidebar-nav">
                         <li>Bibliotecarios</li>
-                        {% if perms.catalog.can_mark_returned %}
-                            <li><a href="{% url 'all-borrowed' %}">All borrowed</a></li>
-                        {% endif %}
-                        {% if perms.catalog.can_mark_returned %}
-                            <a href="{% url 'renew-book-librarian' bookinst.id %}">Renew</a>  
-                        {% endif %}
+                        <li><a href="{% url 'all-borrowed' %}">All borrowed</a></li>
                         </ul>
                     {% endif %}
                     
