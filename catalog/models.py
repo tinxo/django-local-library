@@ -62,6 +62,11 @@ class Book(models.Model):
     
     display_genre.short_description = 'Genre'
 
+    class Meta:
+        permissions = (
+            ("can_add_mod_del_books", "Add, modify or delete books"),
+        ) 
+
 
 # Modelo de instancias de libros
 
@@ -94,6 +99,7 @@ class BookInstance(models.Model):
         permissions = (
             ("can_mark_returned", "Set book as returned"),
             ("can_view_all_borrowed", "View books borrowed by all users"),
+            #("can_renew", "Renew the book loan for another period"),
         ) 
         
 
@@ -134,6 +140,11 @@ class Author(models.Model):
         String para representar el Objeto Modelo
         """
         return '{0}, {1}'.format(self.last_name, self.first_name)
+    
+    class Meta:
+        permissions = (
+            ("can_add_mod_del_authors", "Add, modify or delete authors"),
+        ) 
 
 
 # Modelo para el lenguaje de los libros
