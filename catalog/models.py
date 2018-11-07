@@ -94,6 +94,7 @@ class BookInstance(models.Model):
         permissions = (
             ("can_mark_returned", "Set book as returned"),
             ("can_view_all_borrowed", "View books borrowed by all users"),
+            #("can_renew", "Renew the book loan for another period"),
         ) 
         
 
