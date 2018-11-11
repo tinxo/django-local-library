@@ -46,10 +46,11 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.mixins import PermissionRequiredMixin
 # Esto se agrega para que las vistas-de-clase tengan el control de login y de permisos
 
-class BookListView(LoginRequiredMixin, generic.ListView):
+#class BookListView(LoginRequiredMixin, generic.ListView):
+class BookListView(generic.ListView):
     model = Book
     template_name = 'book_list.html'  # Specify your own template name/location
-    paginate_by = 2
+    paginate_by = 10
 
     def get_queryset(self):
         #return Book.objects.filter(title__icontains='war')[:5] # Get 5 books containing the title war
@@ -62,13 +63,15 @@ class BookListView(LoginRequiredMixin, generic.ListView):
         context['some_data'] = 'This is just some data'
         return context
 
-class BookDetailView(LoginRequiredMixin, generic.DetailView):
+#class BookDetailView(LoginRequiredMixin, generic.DetailView):
+class BookDetailView(generic.DetailView):
     model = Book
 
 class AuthorListView(LoginRequiredMixin, generic.ListView):
+#class AuthorListView(generic.ListView):
     model = Author
     template_name = 'author_list.html'
-    paginate_by = 2
+    paginate_by = 10
 
     def get_queryset(self):
         return Author.objects.all()
@@ -78,6 +81,7 @@ class AuthorListView(LoginRequiredMixin, generic.ListView):
         return context
 
 class AuthorDetailView(LoginRequiredMixin, generic.DetailView):
+#class AuthorDetailView(generic.DetailView):
     model = Author
 
 class LoanedBooksByUserListView(LoginRequiredMixin,generic.ListView):
@@ -132,7 +136,8 @@ def renew_book_librarian(request, pk):
         # Check if the form is valid:
         if form.is_valid():
             # process the data in form.cleaned_data as required (here we just write it to the model due_back field)
-            book_inst.due_back = form.cleaned_data['renewal_date']
+            #book_inst.due_back = form.cleaned_data['renewal_date']
+            book_inst.due_back = form.cleaned_data['due_back']
             book_inst.save()
 
             # redirect to a new URL:
@@ -152,6 +157,7 @@ from .models import Author
 
 class AuthorCreate(PermissionRequiredMixin, CreateView):
     permission_required = 'catalog.can_add_mod_del_authors'
+    permission_denied_message = 'Solicite acceso al administrador del sitio.'
     model = Author
     fields = '__all__'
     #initial={'date_of_death':'05/01/2018',}
