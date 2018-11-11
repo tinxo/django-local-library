@@ -136,7 +136,8 @@ def renew_book_librarian(request, pk):
         # Check if the form is valid:
         if form.is_valid():
             # process the data in form.cleaned_data as required (here we just write it to the model due_back field)
-            book_inst.due_back = form.cleaned_data['renewal_date']
+            #book_inst.due_back = form.cleaned_data['renewal_date']
+            book_inst.due_back = form.cleaned_data['due_back']
             book_inst.save()
 
             # redirect to a new URL:
@@ -156,6 +157,7 @@ from .models import Author
 
 class AuthorCreate(PermissionRequiredMixin, CreateView):
     permission_required = 'catalog.can_add_mod_del_authors'
+    permission_denied_message = 'Solicite acceso al administrador del sitio.'
     model = Author
     fields = '__all__'
     #initial={'date_of_death':'05/01/2018',}
