@@ -62,10 +62,17 @@ class Book(models.Model):
     
     display_genre.short_description = 'Genre'
 
+    class Meta:
+        permissions = (
+            ("can_add_mod_del_books", "Add, modify or delete books"),
+        ) 
+
 
 # Modelo de instancias de libros
 
 import uuid # Requerida para las instancias de libros únicos
+from django.contrib.auth.models import User # Para vincular las instancias con prestamos a usuarios
+from datetime import date
 
 class BookInstance(models.Model):
     """
@@ -85,8 +92,15 @@ class BookInstance(models.Model):
 
     status = models.CharField(max_length=1, choices=LOAN_STATUS, blank=True, default='m', help_text='Disponibilidad del libro')
 
+    borrower = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+
     class Meta:
         ordering = ["due_back"]
+        permissions = (
+            ("can_mark_returned", "Set book as returned"),
+            ("can_view_all_borrowed", "View books borrowed by all users"),
+            #("can_renew", "Renew the book loan for another period"),
+        ) 
         
 
     def __str__(self):
@@ -95,6 +109,12 @@ class BookInstance(models.Model):
         """
         # return '%s (%s)' % (self.id,self.book.title) ->> esto funcionaba con python 2
         return '{0} ({1})'.format(self.book,self.id)
+    
+    @property
+    def is_overdue(self):
+        if self.due_back and date.today() > self.due_back:
+            return True
+        return False
 
 
 # Modelo para los autores
@@ -106,7 +126,7 @@ class Author(models.Model):
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     date_of_birth = models.DateField(null=True, blank=True)
-    date_of_death = models.DateField('Died', null=True, blank=True)
+    date_of_death = models.DateField('died', null=True, blank=True)
     
     def get_absolute_url(self):
         """
@@ -120,6 +140,12 @@ class Author(models.Model):
         String para representar el Objeto Modelo
         """
         return '{0}, {1}'.format(self.last_name, self.first_name)
+    
+    class Meta:
+        ordering = ['-id']
+        permissions = (
+            ("can_add_mod_del_authors", "Add, modify or delete authors"),
+        ) 
 
 
 # Modelo para el lenguaje de los libros

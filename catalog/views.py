@@ -3,7 +3,9 @@ from django.shortcuts import render
 # Create your views here.
 
 from .models import Book, Author, BookInstance, Genre
+from django.contrib.auth.decorators import login_required
 
+@login_required
 def index(request):
     """
     Función vista para la página inicio del sitio.
@@ -40,11 +42,15 @@ def index(request):
 # Se crea una vista-de-clase, para eso en vez de una función se genera una clase por el modelo
 
 from django.views import generic
+from django.contrib.auth.mixins import LoginRequiredMixin 
+from django.contrib.auth.mixins import PermissionRequiredMixin
+# Esto se agrega para que las vistas-de-clase tengan el control de login y de permisos
 
+#class BookListView(LoginRequiredMixin, generic.ListView):
 class BookListView(generic.ListView):
     model = Book
     template_name = 'book_list.html'  # Specify your own template name/location
-    paginate_by = 2
+    paginate_by = 10
 
     def get_queryset(self):
         #return Book.objects.filter(title__icontains='war')[:5] # Get 5 books containing the title war
@@ -57,13 +63,15 @@ class BookListView(generic.ListView):
         context['some_data'] = 'This is just some data'
         return context
 
+#class BookDetailView(LoginRequiredMixin, generic.DetailView):
 class BookDetailView(generic.DetailView):
     model = Book
 
-class AuthorListView(generic.ListView):
+class AuthorListView(LoginRequiredMixin, generic.ListView):
+#class AuthorListView(generic.ListView):
     model = Author
     template_name = 'author_list.html'
-    paginate_by = 2
+    paginate_by = 10
 
     def get_queryset(self):
         return Author.objects.all()
@@ -72,5 +80,111 @@ class AuthorListView(generic.ListView):
         context = super(AuthorListView, self).get_context_data(**kwargs)
         return context
 
-class AuthorDetailView(generic.DetailView):
+class AuthorDetailView(LoginRequiredMixin, generic.DetailView):
+#class AuthorDetailView(generic.DetailView):
     model = Author
+
+class LoanedBooksByUserListView(LoginRequiredMixin,generic.ListView):
+    """
+    Generic class-based view listing books on loan to current user. 
+    """
+    model = BookInstance
+    template_name ='catalog/bookinstance_list_borrowed_user.html'
+    paginate_by = 10
+    
+    def get_queryset(self):
+        return BookInstance.objects.filter(borrower=self.request.user).filter(status__exact='o').order_by('due_back')
+
+
+
+class LoanedBooksAllListView(PermissionRequiredMixin,generic.ListView):
+    """
+    Generic class-based view listing all books on loan.
+    """
+    permission_required = 'catalog.can_view_all_borrowed'
+    model = BookInstance
+    template_name ='catalog/bookinstance_list_borrowed.html'
+    paginate_by = 10
+    
+    def get_queryset(self):
+        return BookInstance.objects.filter(status__exact='o').order_by('due_back')
+
+# Vista para la renovación de los libros
+
+
+from django.shortcuts import get_object_or_404
+from django.http import HttpResponseRedirect
+from django.urls import reverse
+from django.contrib.auth.decorators import permission_required
+
+import datetime
+
+from .forms import RenewBookForm, RenewBookModelForm
+
+@permission_required('catalog.can_mark_returned')
+def renew_book_librarian(request, pk):
+    #permission_required = 'catalog.can_renew'
+    book_inst=get_object_or_404(BookInstance, pk = pk)
+
+    # If this is a POST request then process the Form data
+    if request.method == 'POST':
+
+        # Create a form instance and populate it with data from the request (binding):
+        #form = RenewBookForm(request.POST)
+        form = RenewBookModelForm(request.POST)
+
+        # Check if the form is valid:
+        if form.is_valid():
+            # process the data in form.cleaned_data as required (here we just write it to the model due_back field)
+            #book_inst.due_back = form.cleaned_data['renewal_date']
+            book_inst.due_back = form.cleaned_data['due_back']
+            book_inst.save()
+
+            # redirect to a new URL:
+            return HttpResponseRedirect(reverse('all-borrowed') )
+
+    # If this is a GET (or any other method) create the default form.
+    else:
+        proposed_renewal_date = datetime.date.today() + datetime.timedelta(weeks=3)
+        #form = RenewBookForm(initial={'renewal_date': proposed_renewal_date,})
+        form = RenewBookModelForm(initial={'due_back': proposed_renewal_date}, instance=book_inst)
+
+    return render(request, 'catalog/book_renew_librarian.html', {'form': form, 'bookinst':book_inst})
+
+from django.views.generic.edit import CreateView, UpdateView, DeleteView
+from django.urls import reverse_lazy
+from .models import Author
+
+class AuthorCreate(PermissionRequiredMixin, CreateView):
+    permission_required = 'catalog.can_add_mod_del_authors'
+    permission_denied_message = 'Solicite acceso al administrador del sitio.'
+    model = Author
+    fields = '__all__'
+    #initial={'date_of_death':'05/01/2018',}
+
+class AuthorUpdate(PermissionRequiredMixin, UpdateView):
+    permission_required = 'catalog.can_add_mod_del_authors'
+    model = Author
+    fields = ['first_name','last_name','date_of_birth','date_of_death']
+
+class AuthorDelete(PermissionRequiredMixin, DeleteView):
+    permission_required = 'catalog.can_add_mod_del_authors'
+    model = Author
+    success_url = reverse_lazy('authors')
+
+from .models import Book
+
+class BookCreate(PermissionRequiredMixin, CreateView):
+    permission_required = 'catalog.can_add_mod_del_books'
+    model = Book
+    fields = '__all__'
+
+class BookUpdate(PermissionRequiredMixin, UpdateView):
+    permission_required = 'catalog.can_add_mod_del_books'
+    model = Book
+    fields = '__all__'
+
+class BookDelete(PermissionRequiredMixin, DeleteView):
+    permission_required = 'catalog.can_add_mod_del_books'
+    model = Book
+    success_url = reverse_lazy('books')
